@@ -1,0 +1,104 @@
+---
+title: "Final Project : Practical Machine Learning"
+output: html_document
+---
+
+
+```{r}
+#Load in neccesary library for this project.
+suppressWarnings(library(ggplot2))
+suppressWarnings(library(ElemStatLearn))
+suppressWarnings(library(AppliedPredictiveModeling))
+suppressWarnings(library(rattle))
+suppressWarnings(library(caret))
+suppressWarnings(library(corrplot))
+```
+
+Set seed and loading in data
+
+```{r}
+set.seed(0.123)
+pml_training<-read.csv("pml-training.csv")
+pml_testing<-read.csv("pml-testing.csv")
+
+```
+Both training and testing data set have N/A columns and rows , we are going to eliminate thoes N/A to have clean 
+data for model fitting.
+
+```{r}
+#Find the columns that is N/A in pml_training data set
+col_train<-colSums(is.na(pml_training))
+#col_train != 0 means these columns are N/A
+col_train_na<-pml_training[, col_train != 0]
+#Get the name of the N/A columns
+name_list_train<-names(col_train_na)
+
+```
+```{r}
+#find the column with all NA in test set
+col_test<-colSums(is.na(pml_testing)) 
+
+#get the column with NA value i.e sum <> 0 
+
+col_test_na<-pml_testing[, col_test != 0]
+
+name_list_test<-names(col_test_na)
+
+#Subseting the testing set to remove N/A columns
+pml_testing.2 <- pml_testing[, !names(pml_testing) %in% name_list_test]
+```
+```{r}
+#subset the training set to remove N/A
+pml_training.3 <- pml_training[, !names(pml_training) %in% name_list_train]
+#subset again with testing names the to make sure remove N/A in both testing and training
+pml_training.3u <- pml_training.3[, !names(pml_training.3) %in% name_list_test]
+
+#Remove column 1-6 since they are not predictors
+pml_training.3u<-pml_training.3u[,!names(pml_training.3u) %in% names(pml_training.3u)[1:6]]
+
+pml_testing.2<-pml_testing.2[,!names(pml_testing.2) %in% names(pml_testing.2)[1:6]]
+rm(pml_training.3)
+```
+
+Plot the correlation of predictors of the data
+```{r}
+corrplot(cor(pml_training.3u[,names(pml_training.3u)[1:53]
+                    ]),order = "AOE")
+```
+
+```{r}
+#Divide the train data set into train and validation set
+pml_3u_train_index = createDataPartition(y = pml_training.3u$classe, p = 0.7, list = FALSE)
+pml_3u_train = pml_training.3u[pml_3u_train_index, ]
+pml_3u_valid = pml_training.3u[-pml_3u_train_index, ]
+
+```
+
+```{r,eval = FALSE}
+#Fit model : use gbm , as you can see from the corr plot above, there are many correlation in the #data set, so using pca to preprocess to pick the principal components is neccessary
+modelFit <- train(classe ~ ., method = "gbm", data = pml_3u_train,
+                  
+                  trControl = trainControl(method = "cv", number = 4 , classProbs = TRUE),preProcess = "pca")
+```                  
+
+
+```{r}
+#Validate the fitted model with validation set , and making confusion matrix   
+load("modelFit.Rdata")
+pred_valid <- predict(modelFit, pml_3u_valid)
+confus <- confusionMatrix(pml_3u_valid$classe, pred_valid)
+#Evaluation of out fit: 
+confus
+                  
+```
+
+
+```{r}
+#The overall accurary is 0.817 , not really high for gbm , however it does a decent job in #predictinng the test cases: 
+pred_gbm_test<-predict(modelFit,pml_testing.2)
+pred_gbm_test
+
+#the pred_gbm_test misses case 1,3,8 according to result from the quizz.
+```
+
+
