@@ -87,11 +87,18 @@ modelFit <- train(classe ~ ., method = "gbm", data = pml_3u_train,
 load("modelFit.Rdata")
 pred_valid <- predict(modelFit, pml_3u_valid)
 confus <- confusionMatrix(pml_3u_valid$classe, pred_valid)
-#Evaluation of out fit: 
+#Evaluation of our fit: 
 confus
                   
 ```
 
+```{r}
+#out of sample error 
+fit_accuracy <- postResample(pml_3u_valid$classe, pred_valid)
+fit_accuracy[[1]]
+out_of_sample_error <- 1 - fit_accuracy[[1]]
+out_of_sample_error
+```
 
 ```{r}
 #The overall accurary is 0.817 , not really high for gbm , however it does a decent job in #predictinng the test cases: 

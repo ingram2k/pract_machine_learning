@@ -185,7 +185,7 @@ modelFit &lt;- train(classe ~ ., method = &quot;gbm&quot;, data = pml_3u_train,
 load(&quot;modelFit.Rdata&quot;)
 pred_valid &lt;- predict(modelFit, pml_3u_valid)
 confus &lt;- confusionMatrix(pml_3u_valid$classe, pred_valid)
-#Evaluation of out fit: 
+#Evaluation of our fit: 
 confus</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
@@ -218,6 +218,13 @@ confus</code></pre>
 ## Detection Rate         0.2518   0.1478   0.1426   0.1266   0.1482
 ## Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
 ## Balanced Accuracy      0.9073   0.8556   0.8428   0.8806   0.9386</code></pre>
+<pre class="r"><code>#out of sample error 
+fit_accuracy &lt;- postResample(pml_3u_valid$classe, pred_valid)
+fit_accuracy[[1]]</code></pre>
+<pre><code>## [1] 0.8169924</code></pre>
+<pre class="r"><code>out_of_sample_error &lt;- 1 - fit_accuracy[[1]]
+out_of_sample_error</code></pre>
+<pre><code>## [1] 0.1830076</code></pre>
 <pre class="r"><code>#The overall accurary is 0.817 , not really high for gbm , however it does a decent job in #predictinng the test cases: 
 pred_gbm_test&lt;-predict(modelFit,pml_testing.2)
 pred_gbm_test</code></pre>
